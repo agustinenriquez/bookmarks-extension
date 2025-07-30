@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Bookmarks & History",
+  "version": "1.0",
+  "description": "Track daily visited sites and manage bookmarks in a convenient popup",
+  "permissions": [
+    "tabs",
+    "bookmarks",
+    "history",
+    "storage",
+    "activeTab",
+    "alarms"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Smart Bookmarks & History"
+  }
+}
