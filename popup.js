@@ -124,17 +124,50 @@ function renderTodaySites(sites) {
     return;
   }
   
-  container.innerHTML = sites.map(site => `
-    <li class="site-item" data-url="${escapeHtml(site.url)}">
-      <img class="site-favicon" src="${getFaviconUrl(site.url)}" onerror="this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"%23999\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\"/></svg>'">
-      <div class="site-info">
-        <div class="site-title">${escapeHtml(site.title)}</div>
-        <div class="site-url">${escapeHtml(site.url)}</div>
-      </div>
-      <div class="site-meta">${site.visitCount}x</div>
-      <button class="bookmark-btn" onclick="toggleBookmark('${escapeHtml(site.url)}', '${escapeHtml(site.title)}', this)">★</button>
-    </li>
-  `).join('');
+  container.innerHTML = '';
+  
+  sites.forEach(site => {
+    const li = document.createElement('li');
+    li.className = 'site-item';
+    li.dataset.url = site.url;
+    
+    const favicon = document.createElement('img');
+    favicon.className = 'site-favicon';
+    favicon.src = getFaviconUrl(site.url);
+    favicon.onerror = () => {
+      favicon.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="%23999"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+    };
+    
+    const siteInfo = document.createElement('div');
+    siteInfo.className = 'site-info';
+    
+    const siteTitle = document.createElement('div');
+    siteTitle.className = 'site-title';
+    siteTitle.textContent = site.title;
+    
+    const siteUrl = document.createElement('div');
+    siteUrl.className = 'site-url';
+    siteUrl.textContent = site.url;
+    
+    siteInfo.appendChild(siteTitle);
+    siteInfo.appendChild(siteUrl);
+    
+    const siteMeta = document.createElement('div');
+    siteMeta.className = 'site-meta';
+    siteMeta.textContent = `${site.visitCount}x`;
+    
+    const bookmarkBtn = document.createElement('button');
+    bookmarkBtn.className = 'bookmark-btn';
+    bookmarkBtn.textContent = '★';
+    bookmarkBtn.onclick = () => toggleBookmark(site.url, site.title, bookmarkBtn);
+    
+    li.appendChild(favicon);
+    li.appendChild(siteInfo);
+    li.appendChild(siteMeta);
+    li.appendChild(bookmarkBtn);
+    
+    container.appendChild(li);
+  });
   
   // Add click listeners to site items
   container.querySelectorAll('.site-item').forEach(item => {
@@ -159,16 +192,45 @@ function renderBookmarks(bookmarks) {
     return;
   }
   
-  container.innerHTML = bookmarks.map(bookmark => `
-    <li class="site-item" data-url="${escapeHtml(bookmark.url)}">
-      <img class="site-favicon" src="${getFaviconUrl(bookmark.url)}" onerror="this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"%23999\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\"/></svg>'">
-      <div class="site-info">
-        <div class="site-title">${escapeHtml(bookmark.title)}</div>
-        <div class="site-url">${escapeHtml(bookmark.url)}</div>
-      </div>
-      <button class="bookmark-btn bookmarked" onclick="removeBookmark('${bookmark.id}', this)">★</button>
-    </li>
-  `).join('');
+  container.innerHTML = '';
+  
+  bookmarks.forEach(bookmark => {
+    const li = document.createElement('li');
+    li.className = 'site-item';
+    li.dataset.url = bookmark.url;
+    
+    const favicon = document.createElement('img');
+    favicon.className = 'site-favicon';
+    favicon.src = getFaviconUrl(bookmark.url);
+    favicon.onerror = () => {
+      favicon.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="%23999"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+    };
+    
+    const siteInfo = document.createElement('div');
+    siteInfo.className = 'site-info';
+    
+    const siteTitle = document.createElement('div');
+    siteTitle.className = 'site-title';
+    siteTitle.textContent = bookmark.title;
+    
+    const siteUrl = document.createElement('div');
+    siteUrl.className = 'site-url';
+    siteUrl.textContent = bookmark.url;
+    
+    siteInfo.appendChild(siteTitle);
+    siteInfo.appendChild(siteUrl);
+    
+    const bookmarkBtn = document.createElement('button');
+    bookmarkBtn.className = 'bookmark-btn bookmarked';
+    bookmarkBtn.textContent = '★';
+    bookmarkBtn.onclick = () => removeBookmark(bookmark.id, bookmarkBtn);
+    
+    li.appendChild(favicon);
+    li.appendChild(siteInfo);
+    li.appendChild(bookmarkBtn);
+    
+    container.appendChild(li);
+  });
   
   // Add click listeners to bookmark items
   container.querySelectorAll('.site-item').forEach(item => {
@@ -256,9 +318,13 @@ function getFaviconUrl(url) {
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Setup detach button
