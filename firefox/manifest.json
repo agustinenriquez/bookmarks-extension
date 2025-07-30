@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Smart Bookmarks & History",
+  "version": "1.0",
+  "description": "Track daily visited sites and manage bookmarks in a convenient popup",
+  "permissions": [
+    "tabs",
+    "bookmarks",
+    "history",
+    "storage",
+    "activeTab",
+    "alarms",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Smart Bookmarks & History"
+  },
+  "applications": {
+    "gecko": {
+      "id": "smart-bookmarks@example.com",
+      "strict_min_version": "57.0"
+    }
+  }
+}
