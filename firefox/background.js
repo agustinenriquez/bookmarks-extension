@@ -32,22 +32,26 @@ function openDetachedWindow() {
 }
 
 // Track tab updates (when user navigates to new URLs)
-browserAPI.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   console.log('Tab updated:', {tabId, changeInfo, url: tab.url, title: tab.title});
   if (changeInfo.status === 'complete' && tab.url) {
     // Only track http/https URLs
     if (tab.url.startsWith('http://') || tab.url.startsWith('https://')) {
       console.log('Saving daily visit:', tab.url, tab.title);
-      saveDailyVisit(tab.url, tab.title);
+      
+      // Check if tab is in private browsing mode
+      const isPrivate = tab.incognito;
+      await saveDailyVisit(tab.url, tab.title, isPrivate);
     }
   }
 });
 
 // Track tab activation (when user switches tabs)
 browserAPI.tabs.onActivated.addListener((activeInfo) => {
-  browserAPI.tabs.get(activeInfo.tabId).then((tab) => {
+  browserAPI.tabs.get(activeInfo.tabId).then(async (tab) => {
     if (tab.url && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
-      saveDailyVisit(tab.url, tab.title);
+      const isPrivate = tab.incognito;
+      await saveDailyVisit(tab.url, tab.title, isPrivate);
     }
   }).catch(error => {
     console.error('Error getting tab info:', error);
@@ -55,11 +59,11 @@ browserAPI.tabs.onActivated.addListener((activeInfo) => {
 });
 
 // Save visited URL to daily storage
-async function saveDailyVisit(url, title) {
+async function saveDailyVisit(url, title, isPrivate = false) {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  const storageKey = `dailyVisits_${today}`;
+  const storageKey = isPrivate ? `privateVisits_${today}` : `dailyVisits_${today}`;
   
-  console.log('Attempting to save daily visit:', {url, title, storageKey});
+  console.log('Attempting to save daily visit:', {url, title, storageKey, isPrivate});
   
   try {
     const result = await browserAPI.storage.local.get([storageKey]);
@@ -123,6 +127,44 @@ async function cleanupOldVisits() {
     }
   } catch (error) {
     console.error('Error cleaning up old visits:', error);
+  }
+}
+
+// Clean up private browsing data when windows close
+browserAPI.windows.onRemoved.addListener(async (windowId) => {
+  try {
+    // Get all windows to check if any private windows remain
+    const windows = await browserAPI.windows.getAll();
+    const hasPrivateWindows = windows.some(win => win.incognito);
+    
+    if (!hasPrivateWindows) {
+      // No private windows remain, clean up private data
+      console.log('All private windows closed, cleaning up private data');
+      await cleanupPrivateData();
+    }
+  } catch (error) {
+    console.error('Error checking for private windows:', error);
+  }
+});
+
+// Clean up private browsing data
+async function cleanupPrivateData() {
+  try {
+    const allKeys = await browserAPI.storage.local.get();
+    const keysToRemove = [];
+    
+    for (const key in allKeys) {
+      if (key.startsWith('privateVisits_')) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    if (keysToRemove.length > 0) {
+      await browserAPI.storage.local.remove(keysToRemove);
+      console.log('Cleaned up private browsing data:', keysToRemove);
+    }
+  } catch (error) {
+    console.error('Error cleaning up private data:', error);
   }
 }
 

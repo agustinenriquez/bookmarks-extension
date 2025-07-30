@@ -72,12 +72,39 @@ function applySearch(query) {
 async function loadTodaySites() {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const storageKey = `dailyVisits_${today}`;
-    const result = await browserAPI.storage.local.get([storageKey]);
     
-    allTodaySites = result[storageKey] || [];
+    // Check if we're in a private window
+    const currentWindow = await browserAPI.windows.getCurrent();
+    const isPrivate = currentWindow.incognito;
+    
+    // Load appropriate data based on private mode
+    const regularKey = `dailyVisits_${today}`;
+    const privateKey = `privateVisits_${today}`;
+    
+    let regularSites = [];
+    let privateSites = [];
+    
+    if (isPrivate) {
+      // In private mode, load both private session data and regular data
+      const result = await browserAPI.storage.local.get([regularKey, privateKey]);
+      regularSites = result[regularKey] || [];
+      privateSites = result[privateKey] || [];
+      
+      // Show private sites first, then regular sites
+      allTodaySites = [...privateSites, ...regularSites];
+      
+      // Update tab label to indicate private mode
+      const todayTab = document.querySelector('[data-tab="today"]');
+      if (todayTab) {
+        todayTab.textContent = '🔒 Today (Private)';
+      }
+    } else {
+      // In regular mode, only load regular sites
+      const result = await browserAPI.storage.local.get([regularKey]);
+      allTodaySites = result[regularKey] || [];
+    }
+    
     allTodaySites.sort((a, b) => b.lastVisited - a.lastVisited);
-    
     renderTodaySites(allTodaySites);
   } catch (error) {
     console.error('Error loading today\'s sites:', error);
